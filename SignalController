@@ -5,22 +5,23 @@ using UnityEngine.Networking;
 
 public class SignalController : MonoBehaviour
 {
+    private char[] msg = {'0', '0', '0', '0', '0', '0', '0'};
 
-    private string[] requests = {
-        "00000000",
-        "00000001",
-        "01000001",
-        "02000001",
-        "03000001",
-        "04000001",
-        "05000001",
-        "06000001",
-        "07000001",
-    };
+    public void sendSignal(int finger, int value = 0) {
+        string send = "";
+        msg[finger] = (char)(value + '0');
+        for (int i = 0; i < msg.Length; i++) {
+            send += msg[i];
+        }
+        Debug.Log(send);
+        StartCoroutine(Upload(send));
+    }
 
-    public void sendSignal(int n)
-    {
-        StartCoroutine(Upload(requests[n]));
+    public void reset() {
+        for (int i = 0; i < msg.Length; i++) {
+            msg[i] = '0';
+        }
+        sendSignal(0);
     }
 
     private const string device_id = "1c0035001347343438323536";

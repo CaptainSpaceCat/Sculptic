@@ -14,7 +14,7 @@ public class SphereSpawn : MonoBehaviour {
     void Start() {
         for (int i = 0; i < sphereCount; i++) {
             Transform newTransform = GenRandTransform();
-            GameObject sphere = Instantiate(sourceSphere, newTransform.position, Quaternion.identity);
+            Instantiate(sourceSphere, newTransform.position, Quaternion.identity);
         }
     }
 

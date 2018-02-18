@@ -1,0 +1,17 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GoalSphereController : MonoBehaviour {
+
+    public float maxDist;
+    public float maxRadius;
+    public float minRadius;
+
+    //lets the game work properly by moving the pre-existing goal sphere to a random location and resizing it randomly, all within specified parameters
+	void Start () {
+		transform.position = new Vector3(maxDist * (Random.value * 2 - 1), maxDist * (Random.value * 2 - 1), maxDist * (Random.value * 2 - 1));
+        float randRadius = ((maxRadius - minRadius) * Random.value) + minRadius;
+        transform.localScale = new Vector3(randRadius, randRadius, randRadius);
+    }
+}

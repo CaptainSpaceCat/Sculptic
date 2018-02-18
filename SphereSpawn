@@ -1,0 +1,29 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SphereSpawn : MonoBehaviour {
+
+    public float maxDist = 10;
+    public int sphereCount = 5;
+    public float minRadius = 0;
+    public float maxRadius = 5;
+    public GameObject sourceSphere;
+
+   //initializes the game by creating a set number of randomly sized and located spheres around the player's location
+    void Start() {
+        for (int i = 0; i < sphereCount; i++) {
+            Transform newTransform = GenRandTransform();
+            GameObject sphere = Instantiate(sourceSphere, newTransform.position, Quaternion.identity);
+        }
+    }
+
+    //this function returns a location and a radius within specified parameters, for use with spawning spheres
+    Transform GenRandTransform() {
+        Transform newTransform = sourceSphere.transform;
+        newTransform.position = new Vector3(maxDist * (Random.value * 2 - 1), maxDist * (Random.value * 2 - 1), maxDist * (Random.value * 2 - 1));
+        float randRadius = ((maxRadius-minRadius) * Random.value) + minRadius;
+        newTransform.localScale = new Vector3(randRadius, randRadius, randRadius);
+        return newTransform;
+    }
+}

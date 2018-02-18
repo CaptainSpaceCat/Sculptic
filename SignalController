@@ -1,0 +1,35 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Networking;
+
+public class SignalController : MonoBehaviour {
+
+    private string[] requests = {
+        "off", //0
+        "on"   //1
+    };
+
+	public void sendSignal(int n) {
+        StartCoroutine(Upload(requests[n]));
+    }
+
+    private const string device_id = "1c0035001347343438323536";
+    private const string access_token = "a19d86e13f2ee817a2f527157206260834663d76";
+
+    IEnumerator Upload(string msg) {
+        WWWForm form = new WWWForm();
+        form.AddField("access_token", access_token);
+        form.AddField("arg", msg);
+
+        UnityWebRequest www = UnityWebRequest.Post("https://api.particle.io/v1/devices/" + device_id + "/led", form);
+        Debug.Log(www.url);
+        yield return www.SendWebRequest();
+
+        if (www.isNetworkError || www.isHttpError) {
+            Debug.Log(www.error);
+        } else {
+            Debug.Log("Form upload complete!");
+        }
+    }
+}

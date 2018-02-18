@@ -1,0 +1,79 @@
+//stores pin locations
+int led = D6;
+int vibes[] = {A0, D3, D1, D5, D7, A4, D0};
+
+//number of vibration motors
+const int VIBE_NUM = 7;
+//number of levels of vibration available
+const int VIBE_STATES = 10;
+//data for each vibration motor compressed into a string
+String vibeLevels = "0000000";
+
+
+//setup function, makes sure each pin is set to output mode
+void setup() {
+    pinMode(D6, OUTPUT);
+    ledToggle("off");
+    
+    for (int i = 0; i < VIBE_NUM; i++) {
+        pinMode(vibes[i], OUTPUT);
+        digitalWrite(vibes[i], LOW);
+        
+    }
+    //Flashes three times to show that the power is on and that a connection has been established
+    for (int i = 1; i <= 3; i++) {
+        ledToggle("on");
+        delay(250);
+        ledToggle("off");
+        delay(250);
+    }
+
+    //uses the particle photon to send functions to the cloud
+    //so they can be called with POST requests referencing the string they are bound to
+    Particle.function("led", ledToggle);
+    Particle.function("vibe", vibeController);
+}
+
+//the loop function handles simiulated PWM over the vibration motors
+void loop() {
+    //simulated PWM
+    //one loop contains one chunk for each level of vibration available to the user
+    for (int i = 0; i < VIBE_STATES; i++) {
+        //for each chunk of one loop, the function checks the value for each vibration motor, stored in the vibeLevels string
+        //if the value is less than the amount of chunks passed in the loop, we have exited that motor's "on" phase,
+        //and it's time to switch it into its "off" phase
+        for (int j = 0; j < vibeLevels.length(); j++) {
+        int level = vibeLevels.charAt(j) - '0';
+            if (level > i) {
+                digitalWrite(vibes[j], HIGH);
+            } else {
+                digitalWrite(vibes[j], LOW);
+            }
+        }
+        //delay is required so that the values aren't written too closely together
+        //minimal delay is required to ensure that it feels like PWM
+        delay(1);
+    }
+    
+}
+
+//Particle function that allows the LED light onboard the Sculptic to be toggled on or off
+int ledToggle(String command) {
+    if (command == "on") {
+        digitalWrite(led, HIGH);
+        return 1;
+    }
+    else if (command == "off") {
+        digitalWrite(led, LOW);
+        return 0;
+    }
+    else {
+        return -1;
+    }
+}
+
+//Particle function that allows the user to send a string containing compressed data for the vibration motors
+//overwrites previous data string
+int vibeController(String command) {
+    vibeLevels = command;
+}

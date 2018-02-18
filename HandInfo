@@ -3,44 +3,59 @@ using System.Collections;
 using Leap;
 using Leap.Unity;
 
-public class HandInfo : MonoBehaviour
-{
-    HandModel hand_model;
-    Hand leap_hand;
+public class HandInfo : MonoBehaviour {
+    HandModel model;
+    Hand hand;
 
+    //ball - goal sphere to constantly measure from
     public GameObject ball;
     public SignalController signal;
 
-    void Start()
-    {
-        hand_model = GetComponent<HandModel>();
-        leap_hand = hand_model.GetLeapHand();
-        if (leap_hand == null)
-        {
-            Debug.LogError("No leap_hand found");
-        } else
-        {
-            Debug.Log("Found hand");
+    void Start() {
+        //finds the model and hand objects connected to the component being analyzed
+        model = GetComponent<HandModel>();
+        hand = model.GetLeapHand();
+    }
+
+    void Update() {
+        int d;
+        for (int i = 0; i < HandModel.NUM_FINGERS; i++) {
+            FingerModel finger = model.fingers[i];
+
+            d = hashDistance(Vector3.Distance(finger.GetTipPosition(), ball.transform.position));
+            signal.sendSignal(i, d);
+            Debug.Log("finger" + i + " " + d);
+        }
+        d = hashDistance(Vector3.Distance(model.GetPalmPosition(), ball.transform.position));
+        signal.sendSignal(5, d);
+        signal.sendSignal(6, d);
+        Debug.Log("palm" + d);
+
+        if (checkWin()) {
+            signal.ledToggle(true);
+            Debug.Log("Win state");
+        } else {
+            signal.ledToggle(false);
         }
     }
 
-    void Update()
-    {
-        for (int i = 0; i < HandModel.NUM_FINGERS; i++)
-        {
-            FingerModel finger = hand_model.fingers[i];
-            // draw ray from finger tips (enable Gizmos in Game window to see)
-            //Debug.DrawRay(finger.GetTipPosition(), finger.GetRay().direction, Color.red);
-            //Debug.Log(finger.GetTipPosition());
-            if (Vector3.Distance(finger.GetTipPosition(), ball.transform.position) < .1)
-            {
-                signal.sendSignal(i, 9);
-                Debug.Log("finger" + i + "buzzz");
-            } else
-            {
-                signal.sendSignal(i, 0);
-                Debug.Log("finger" + i + "silence");
+    //accepts a float holding the distance in world units and returns a discretized amount of "buzz" to apply to the fingers
+    int hashDistance(float d) {
+        return (int)(1 / d);
+        //makes more buzz the closer the hand is to the goal
+    }
+
+    //checks to see if the hand is touching the goal sphere, returns true if so and false if not
+    bool checkWin() {
+        //every finger is checked, so only one finger is required to be touching the goal sphere to win
+        for (int i = 0; i < HandModel.NUM_FINGERS; i++) {
+            FingerModel finger = model.fingers[i];
+            //measures distance between hand and the center of the goal sphere, makes sure the hand is within the sphere's radius
+            float d = Vector3.Distance(finger.GetTipPosition(), ball.transform.position);
+            if (d <= ball.transform.localScale.x / 2) {
+                return true;
             }
         }
+        return false;
     }
 }

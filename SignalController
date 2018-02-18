@@ -13,14 +13,14 @@ public class SignalController : MonoBehaviour {
     //since the function is called once every frame, it makes sure that it only sends POST requests to the particle photon if some point of data has changed
     public void sendSignal(int finger, int value = 0) {
         //checks to see if any data has changed
-        if (msg[finger] != (char)(value - '0')) {
+        if (msg[finger] != (char)(value + '0')) {
             string send = "";
-            msg[finger] = (char)(value - '0');
+            msg[finger] = (char)(value + '0');
             //compiles data string
             for (int i = 0; i < msg.Length; i++) {
                 send += msg[i];
             }
-            Debug.Log(send);
+            //Debug.Log("Sent: " + send);
             //upload with keyword vibe to access vibeControl function
             StartCoroutine(Upload("vibe", send));
         }
@@ -63,14 +63,14 @@ public class SignalController : MonoBehaviour {
 
         //sends request
         UnityWebRequest www = UnityWebRequest.Post("https://api.particle.io/v1/devices/" + device_id + "/" + func, form);
-        Debug.Log(www.url);
+        //Debug.Log(www.url);
         yield return www.SendWebRequest();
 
         //make sure it worked
         if (www.isNetworkError || www.isHttpError) {
             Debug.Log(www.error);
         } else {
-            Debug.Log("Form upload complete!");
+            //Debug.Log("Form upload complete!");
         }
     }
 }

@@ -3,20 +3,44 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class SignalController : MonoBehaviour
-{
-    private char[] msg = {'0', '0', '0', '0', '0', '0', '0'};
+public class SignalController : MonoBehaviour {
+    //stores the current state of each buzzer on the sculptic
+    private char[] msg = { '0', '0', '0', '0', '0', '0', '0' };
+    //stores the state of the sculptic's onboard LED
+    bool ledState = false;
 
+    //this function accepts an integer representing which finger (or part of the palm) to work with, and an integer representing the amount of buzz to apply (0 is none, 9 is max)
+    //since the function is called once every frame, it makes sure that it only sends POST requests to the particle photon if some point of data has changed
     public void sendSignal(int finger, int value = 0) {
-        string send = "";
-        msg[finger] = (char)(value + '0');
-        for (int i = 0; i < msg.Length; i++) {
-            send += msg[i];
+        //checks to see if any data has changed
+        if (msg[finger] != (char)(value - '0')) {
+            string send = "";
+            msg[finger] = (char)(value - '0');
+            //compiles data string
+            for (int i = 0; i < msg.Length; i++) {
+                send += msg[i];
+            }
+            Debug.Log(send);
+            //upload with keyword vibe to access vibeControl function
+            StartCoroutine(Upload("vibe", send));
         }
-        Debug.Log(send);
-        StartCoroutine(Upload(send));
+    }
+    //this function accepts a boolean, and based on that sets the LED on the sculptic to on or off
+    //will also check to ensure a state change has occurred before sending requests
+    public void ledToggle(bool on) {
+        //check to see if data has changed
+        if (on != ledState) {
+            string state = "off";
+            if (on) {
+                state = "on";
+            }
+            ledState = on;
+            //use led keyword for ledToggle function
+            StartCoroutine(Upload("led", state));
+        }
     }
 
+    //resets all buzzing to off
     public void reset() {
         for (int i = 0; i < msg.Length; i++) {
             msg[i] = '0';
@@ -24,25 +48,28 @@ public class SignalController : MonoBehaviour
         sendSignal(0);
     }
 
+    //these values allow connection to the particle photon
+    //they will vary from chip to chip
     private const string device_id = "1c0035001347343438323536";
-    private const string access_token = "a19d86e13f2ee817a2f527157206260834663d76";
+    private const string access_token = "1704b5f5c56fdef88e4bc3ea40de83600ae09f4b";
 
-    IEnumerator Upload(string msg)
-    {
+    //coroutine in chanrge of sending POST requests to the particle photon
+    //accepts a string holding a function keyword, and a string containing arguments for that function
+    IEnumerator Upload(string func, string msg) {
+        //pack relevant data into payload
         WWWForm form = new WWWForm();
         form.AddField("access_token", access_token);
         form.AddField("arg", msg);
 
-        UnityWebRequest www = UnityWebRequest.Post("https://api.particle.io/v1/devices/" + device_id + "/led", form);
+        //sends request
+        UnityWebRequest www = UnityWebRequest.Post("https://api.particle.io/v1/devices/" + device_id + "/" + func, form);
         Debug.Log(www.url);
         yield return www.SendWebRequest();
 
-        if (www.isNetworkError || www.isHttpError)
-        {
+        //make sure it worked
+        if (www.isNetworkError || www.isHttpError) {
             Debug.Log(www.error);
-        }
-        else
-        {
+        } else {
             Debug.Log("Form upload complete!");
         }
     }
